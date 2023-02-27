@@ -14,12 +14,19 @@ export default function Options({ optionType }) {
   const { totals } = useOrderDetails();
 
   useEffect(() => {
+    const controller = new AbortController();
+
     axios
-      .get(`http://localhost:3030/${optionType}`)
+      .get(`http://localhost:3030/${optionType}`, { signal: controller.signal })
       .then((response) => setItems(response.data))
       .catch((err) => {
-        setError(true);
+        if (err.name !== "CanceledError") {
+          setError(true);
+        }
       });
+    return () => {
+      controller.abort();
+    };
   }, [optionType]);
 
   if (error) {
@@ -43,7 +50,7 @@ export default function Options({ optionType }) {
       <p>
         {title} total: {formatCurrency(totals[optionType])}
       </p>
-      <Row>{optionsItems}</Row>;
+      <Row>{optionsItems}</Row>
     </>
   );
 }
